@@ -1,5 +1,6 @@
 import {CSSProperties, PropsWithChildren, useCallback, useEffect, useRef, useState} from 'react'
 import {loadNaverMapScript} from './utils.ts'
+import NaverMapContext from './NaverMapContext.tsx'
 
 interface NaverMapProps extends PropsWithChildren {
   clientId: string
@@ -10,7 +11,7 @@ interface NaverMapProps extends PropsWithChildren {
 
 const NaverMap = (props: NaverMapProps) => {
   const {clientId, onLoaded, width, height, children} = props
-  const [isMapLoaded, setIsMapLoaded] = useState(false)
+  const [mapInstance, setMapInstance] = useState<naver.maps.Map>()
   const ref = useRef<HTMLDivElement | null>(null)
 
   const loadNaverMap = useCallback(() => {
@@ -21,9 +22,9 @@ const NaverMap = (props: NaverMapProps) => {
       if (!window.naver) return
       console.log('Naver Map script loaded successfully')
 
-      new naver.maps.Map(ref.current)
+      const map = new naver.maps.Map(ref.current)
 
-      setIsMapLoaded(true)
+      setMapInstance(map)
       onLoaded?.()
 
     }).catch((error) => {
@@ -38,9 +39,11 @@ const NaverMap = (props: NaverMapProps) => {
 
   if (!clientId) return null
 
-  return <div ref={ref} style={{width: width, height: height}}>
-    {isMapLoaded && children}
-  </div>
+  return <NaverMapContext.Provider value={{instance: mapInstance}}>
+    <div ref={ref} style={{width: width, height: height}}>
+      {mapInstance && children}
+    </div>
+  </NaverMapContext.Provider>
 
 }
 
